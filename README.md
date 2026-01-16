@@ -2,6 +2,8 @@
 
 A Chrome extension for managing tabs in a vertical sidebar with enhanced functionality and improved code readability.
 
+![Screenshot](img/screenshots/screenshot.png)
+
 ## 📖 About This Project
 
 This project is based on the original [Vertical Tabs in Side Panel](https://chromewebstore.google.com/detail/vertical-tabs-in-side-pan/akahnknmcbmgodngfjcflnaljdbhnlfo) Chrome extension created by [Guo Kai](https://guokai.dev/). The original extension provides a clean and efficient way to manage browser tabs in a vertical layout.
