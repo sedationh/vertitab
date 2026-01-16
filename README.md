@@ -2,7 +2,20 @@
 
 A Chrome extension for managing tabs in a vertical sidebar with enhanced functionality and improved code readability.
 
-![Screenshot](img/screenshots/screenshot.png)
+## Screenshots
+
+### Before & After
+
+<table>
+<tr>
+<td><img src="img/screenshots/screenshot-before.png" alt="Before - Original Version"/></td>
+<td><img src="img/screenshots/screenshot-after.png" alt="After - Enhanced Version"/></td>
+</tr>
+<tr>
+<td align="center"><b>Before - Original Version</b></td>
+<td align="center"><b>After - Enhanced Version</b></td>
+</tr>
+</table>
 
 ## 📖 About This Project
 
