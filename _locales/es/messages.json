@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "Pestañas verticales en la barra lateral"
+  },
+  "extShortName": {
+    "message": "Pestañas verticales"
+  },
+  "extDescription": {
+    "message": "Muestre y administre pestañas verticalmente en la barra lateral del navegador."
+  }
+}

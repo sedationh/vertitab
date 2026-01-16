@@ -1,0 +1,62 @@
+html {
+  color-scheme: dark;
+  --group-color-grey: #DADCE0;
+  --group-color-grey-text: black;
+  --group-color-blue: #42A5F5;
+  --group-color-blue-text: black;
+  --group-color-red: #F18C85;
+  --group-color-red-text: black;
+  --group-color-yellow: #FDD671;
+  --group-color-yellow-text: black;
+  --group-color-green: #83C999;
+  --group-color-green-text: black;
+  --group-color-pink: #FE8CC9;
+  --group-color-pink-text: black;
+  --group-color-purple: #C48BF4;
+  --group-color-purple-text: black;
+  --group-color-cyan: #7BD9EA;
+  --group-color-cyan-text: black;
+  --group-color-orange: #FBAD77;
+  --group-color-orange-text: black;
+}
+.tab-item:hover {
+  background-color: #323539;
+}
+.tab-item.context-focus {
+  border-color: white;
+}
+.tab-active {
+  background-color: #404040  !important;
+}
+.group-expand-icon, .context-group-color.selected::before {
+  filter: none;
+}
+.close-btn, .favicon[src="img/tab.svg"], #newtab-btn > img, .state-indicator > img {
+  filter: invert(100%);
+}
+#newtab-btn {
+  background-color: #484f57;
+}
+.drag-over {
+  border-top: 4px dashed gray;
+}
+.context-menu, #settings-container, #close-confirm {
+  background-color: #323232;
+  color: #eeeeee;
+}
+.context-item:hover {
+  background-color: #4b4b4b;
+}
+#footer img, .search-header img {
+  filter: invert(80%);
+}
+mark {
+  color: white;
+  background-color: #636363;
+}
+.search-item:hover {
+  background-color: #323539;
+}
+.search-url {
+  color: #d1d1d1;
+}

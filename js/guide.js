@@ -1,0 +1,2 @@
+function initMsg(a=document){a=a.querySelectorAll("[data-i18n]");for(const b of a)b.textContent=chrome.i18n.getMessage(b.dataset.i18n)}
+function init(){initMsg();document.getElementById("shortcuts").addEventListener("click",function(a){a.preventDefault();a=chrome.i18n.getMessage("extName");a="chrome://extensions/shortcuts#:~:text="+encodeURIComponent(a);chrome.tabs.create({url:a})});document.getElementById("browser-settings").addEventListener("click",function(a){a.preventDefault();chrome.tabs.create({url:"chrome://settings/appearance"})})}init();

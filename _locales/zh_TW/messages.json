@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "側邊欄垂直分頁"
+  },
+  "extShortName": {
+    "message": "垂直分頁"
+  },
+  "extDescription": {
+    "message": "在瀏覽器側邊欄中垂直顯示和管理分頁。"
+  }
+}

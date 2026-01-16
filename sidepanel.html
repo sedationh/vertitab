@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vertical Tabs</title>
+  <link rel="stylesheet" href="css/sidepanel.css" >
+  <link rel="stylesheet" href="css/sidepanel.dark.css" id="dark-css" disabled>
+</head>
+<body>
+  <main>
+    <div id="main">
+      <div id="tabs-container">
+        <div></div>
+        <div id="newtab"><button id="newtab-btn"><img src="img/add_black.svg"></button></div>
+      </div>
+      <div></div>
+    </div>
+    <div id="footer">
+      <img id="search-icon" src="img/search.svg">
+      <input id="search-input" type="search" autocomplete="off" spellcheck="false">
+      <img id="settings-icon" data-i18n-title="settingSettings" src="img/settings.svg">
+    </div>
+  </main>
+
+  <!-- tab context menu -->
+  <div class="context-menu" id="tab-context-menu">
+    <div class="context-item" id="tab-close-self" data-i18n="menuCloseThis"></div>
+    <div class="context-item" id="tab-close-others" data-i18n="menuCloseOther"></div>
+    <div class="context-item" id="tab-close-left" data-i18n="menuCloseLeft"></div>
+    <div class="context-item" id="tab-close-right" data-i18n="menuCloseRight"></div>
+    <div class="context-item" id="tab-close-group" data-i18n="menuCloseGroup"></div>
+    <div class="context-divider"></div>
+    <div class="context-item" id="tab-newtab-right" data-i18n="menuNewTabRight"></div>
+    <div class="context-item" id="tab-group-add-remove"></div>
+    <div class="context-item" id="tab-move-window" data-i18n="menuTabToNewWindow"></div>
+    <div class="context-item" id="tab-group-move-window" data-i18n="menuGroupToNewWindow"></div>
+    <div class="context-divider"></div>
+    <div class="context-item" id="tab-pin" data-i18n="menuPin"></div>
+    <div class="context-item" id="tab-duplicate" data-i18n="menuDuplicate"></div>
+    <div class="context-item" id="tab-mute" data-i18n="menuMute"></div>
+    <div class="context-item" id="tab-reload" data-i18n="menuReload"></div>
+  </div>
+
+  <!-- group context menu -->
+  <div class="context-menu" id="group-context-menu">
+    <div class="context-group-head">
+      <div>
+        <input id="group-name-input" type="text" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="context-colors-container">
+        <div tabindex="0" class="context-group-color group-color-grey" data-color="grey" data-i18n-title="groupColorGrey"></div>
+        <div tabindex="0" class="context-group-color group-color-blue" data-color="blue" data-i18n-title="groupColorBlue"></div>
+        <div tabindex="0" class="context-group-color group-color-red" data-color="red" data-i18n-title="groupColorRed"></div>
+        <div tabindex="0" class="context-group-color group-color-yellow" data-color="yellow" data-i18n-title="groupColorYellow"></div>
+        <div tabindex="0" class="context-group-color group-color-green" data-color="green" data-i18n-title="groupColorGreen"></div>
+        <div tabindex="0" class="context-group-color group-color-pink" data-color="pink" data-i18n-title="groupColorPink"></div>
+        <div tabindex="0" class="context-group-color group-color-purple" data-color="purple" data-i18n-title="groupColorPurple"></div>
+        <div tabindex="0" class="context-group-color group-color-cyan" data-color="cyan" data-i18n-title="groupColorCyan"></div>
+        <div tabindex="0" class="context-group-color group-color-orange" data-color="orange" data-i18n-title="groupColorOrange"></div>
+      </div>
+    </div>
+    <div class="context-divider"></div>
+    <div class="context-item" id="group-newtab" data-i18n="menuNewTabInGroup"></div>
+    <div class="context-item" id="group-close" data-i18n="menuCloseGroup"></div>
+    <div class="context-item" id="group-ungroup" data-i18n="menuUngroup"></div>
+    <div class="context-item" id="group-move-window" data-i18n="menuGroupToNewWindow"></div>
+  </div>
+
+  <!-- settings menu -->
+  <dialog id="settings-container">
+    <h3 class="settings-header" data-i18n="settingSettings"></h3>
+    <div id="settings-body">
+      <div class="settings-item">
+        <input id="settings-newtab" type="checkbox">
+        <label for="settings-newtab" data-i18n="settingNewtab"></label>
+      </div>
+      <div class="settings-item">
+        <input id="settings-closeByDoubleClick" type="checkbox">
+        <label for="settings-closeByDoubleClick" data-i18n="settingCloseByDoubleClick"></label>
+      </div>
+      <div class="settings-item-grid">
+        <label for="settings-search" data-i18n="settingSearch"></label>
+        <select id="settings-search">
+          <option value="top" data-i18n="settingAtTop"></option>
+          <option value="bottom" data-i18n="settingAtBottom"></option>
+        </select>
+        <label for="settings-font" data-i18n="settingFontSize"></label>
+        <select id="settings-font">
+          <option value="normal" data-i18n="settingFontSizeNormal"></option>
+          <option value="small" data-i18n="settingFontSizeSmall"></option>
+        </select>
+        <label for="settings-theme" data-i18n="settingTheme"></label>
+        <select id="settings-theme">
+          <option value="system" data-i18n="settingThemeSystem"></option>
+          <option value="light" data-i18n="settingThemeLight"></option>
+          <option value="dark" data-i18n="settingThemeDark"></option>
+        </select>
+      </div>
+      <div class="settings-item"><span data-i18n="settingSidebarPosition"></span> <a id="settings-sidebar-position" href="#" data-i18n="settingSidebarPositionLink"></a></div>
+      <div class="settings-item"><span data-i18n="settingSidebarShortcut"></span> <a id="settings-sidebar-shortcut" href="#" data-i18n="settingSidebarShortcutLink"></a></div>
+    </div>
+    <h3 class="settings-header" data-i18n="settingAbout"></h3>
+    <div class="settings-item">
+      <a href="https://chromewebstore.google.com/detail/akahnknmcbmgodngfjcflnaljdbhnlfo" target="_blank" data-i18n="settingRate"></a>
+      |
+      <a href="https://guokai.dev/sponsor" target="_blank" data-i18n="settingDonate"></a>
+      |
+      <a href="https://guokai.dev/" target="_blank" data-i18n="settingWebsite"></a>
+    </div>
+    <footer class="settings-footer">
+      <div>
+        <button id="settings-save" data-i18n="settingSave"></button>
+        <button autofocus id="settings-close" data-i18n="settingCancel"></button>
+      </div>
+    </footer>
+  </dialog>
+
+  <!-- close confirm -->
+  <dialog id="close-confirm">
+    <h3 class="close-confirm-header"></h3>
+    <footer class="close-confirm-footer">
+      <div>
+        <button id="close-confirm-yes" data-i18n="closeConfirmOk"></button>
+        <button id="close-confirm-no" data-i18n="closeConfirmCancel"></button>
+      </div>
+    </footer>
+  </dialog>
+
+  <script type="text/javascript" src="js/sidepanel.js"></script>
+</body>
+</html>
