@@ -60,7 +60,17 @@ This enhanced version includes the following improvements over the original:
 
 ## 🛠️ Installation
 
-### From Source
+### For Users (Recommended)
+
+1. Go to [Releases](https://github.com/YOUR_USERNAME/YOUR_REPO/releases)
+2. Download the latest `vertitab-enhanced-vX.X.X.zip` file
+3. Extract the zip file
+4. Open Chrome and navigate to `chrome://extensions/`
+5. Enable "Developer mode" in the top right
+6. Click "Load unpacked"
+7. Select the extracted `vertitab-enhanced` folder
+
+### From Source (For Developers)
 
 1. Clone or download this repository
 2. Open Chrome and navigate to `chrome://extensions/`
@@ -129,6 +139,16 @@ Contributions are welcome! This project focuses on:
 - Maintaining clean, readable code
 - Adding useful features without compromising simplicity
 - Improving user experience
+
+### For Maintainers
+
+See [RELEASE.md](RELEASE.md) for instructions on creating new releases.
+
+Quick release:
+
+```bash
+./release.sh
+```
 
 ---
 

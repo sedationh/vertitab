@@ -1,12 +1,12 @@
 {
   "extName": {
-    "message": "Vertical Tabs in Side Panel"
+    "message": "Vertical Tabs - Enhanced Edition"
   },
   "extShortName": {
     "message": "Vertical Tabs"
   },
   "extDescription": {
-    "message": "Display and manage tabs vertically in the browser sidebar."
+    "message": "Display and manage tabs vertically in the browser sidebar with enhanced features and improved functionality."
   },
   "actionTitle": {
     "message": "Open Vertical Tabs"
@@ -48,67 +48,58 @@
     "message": "New Tab to the Right"
   },
   "menuAddToGroup": {
-    "message": "Add Tab to New Group"
+    "message": "Add to Group"
   },
   "menuRemoveFromGroup": {
-    "message": "Remove Tab From Group"
-  },
-  "menuNewTabInGroup": {
-    "message": "New Tab in Group"
-  },
-  "menuUngroup": {
-    "message": "Ungroup"
-  },
-  "groupNamePlaceholder": {
-    "message": "Name This Group"
+    "message": "Remove from Group"
   },
   "menuTabToNewWindow": {
-    "message": "Move Tab to New Window"
+    "message": "Move to New Window"
   },
   "menuGroupToNewWindow": {
     "message": "Move Group to New Window"
   },
+  "groupNamePlaceholder": {
+    "message": "Group Name"
+  },
+  "menuGroupClose": {
+    "message": "Close Group"
+  },
+  "menuGroupCloseOther": {
+    "message": "Close Other Groups"
+  },
+  "menuGroupUngroup": {
+    "message": "Ungroup"
+  },
+  "menuGroupMove": {
+    "message": "Move Group"
+  },
+  "menuGroupNewWindow": {
+    "message": "Move to New Window"
+  },
+  "closeConfirmTitle": {
+    "message": "Close $1 tabs?"
+  },
+  "closeConfirmOk": {
+    "message": "Close"
+  },
+  "closeConfirmCancel": {
+    "message": "Cancel"
+  },
   "searchPlaceholder": {
-    "message": "Search Tabs"
+    "message": "Search tabs..."
   },
   "searchResultHeader": {
     "message": "Search Results"
   },
   "searchNoResults": {
-    "message": "No Results Found"
+    "message": "No matching tabs found"
   },
   "settingSettings": {
     "message": "Settings"
   },
-  "settingNewtab": {
-    "message": "Show New Tab Button"
-  },
-  "settingCloseByDoubleClick": {
-    "message": "Double-Click to Close the Tab"
-  },
-  "settingSearch": {
-    "message": "Search Box"
-  },
-  "settingAtTop": {
-    "message": "At the Top"
-  },
-  "settingAtBottom": {
-    "message": "At the Bottom"
-  },
-  "settingFontSize": {
-    "message": "Font Size"
-  },
-  "settingFontSizeNormal": {
-    "message": "Normal"
-  },
-  "settingFontSizeSmall": {
-    "message": "Small"
-  },
   "settingTheme": {
     "message": "Theme"
-  },
-  "settingThemeSystem": {
-    "message": "Auto"
   },
   "settingThemeLight": {
     "message": "Light"
@@ -116,115 +107,79 @@
   "settingThemeDark": {
     "message": "Dark"
   },
-  "settingSidebarPosition": {
-    "message": "Sidebar Position"
+  "settingThemeAuto": {
+    "message": "Auto"
   },
-  "settingSidebarPositionLink": {
-    "message": "Left | Right"
+  "settingSearchPosition": {
+    "message": "Search Position"
   },
-  "settingSidebarShortcut": {
-    "message": "Sidebar Shortcut"
+  "settingSearchTop": {
+    "message": "Top"
   },
-  "settingSidebarShortcutLink": {
-    "message": "Activation"
+  "settingSearchBottom": {
+    "message": "Bottom"
   },
-  "settingAbout": {
-    "message": "About"
+  "settingBrowserSide": {
+    "message": "Browser Settings"
   },
-  "settingRate": {
-    "message": "Rate It"
+  "settingBrowserSideLeft": {
+    "message": "Left"
   },
-  "settingDonate": {
-    "message": "Donate"
+  "settingBrowserSideRight": {
+    "message": "Right"
   },
-  "settingWebsite": {
-    "message": "Website"
+  "settingShowFavicon": {
+    "message": "Show Favicons"
   },
-  "settingSave": {
-    "message": "Save"
+  "settingCloseConfirm": {
+    "message": "Confirm Before Closing Multiple Tabs"
   },
-  "settingCancel": {
-    "message": "Cancel"
-  },
-  "closeConfirmTitle": {
-    "message": "⚠️ $1 tabs will be closed!"
-  },
-  "closeConfirmOk": {
-    "message": "OK"
-  },
-  "closeConfirmCancel": {
-    "message": "Cancel"
-  },
-  "groupColorGrey": {
-    "message": "Grey"
-  },
-  "groupColorBlue": {
-    "message": "Blue"
-  },
-  "groupColorRed": {
-    "message": "Red"
-  },
-  "groupColorYellow": {
-    "message": "Yellow"
-  },
-  "groupColorGreen": {
-    "message": "Green"
-  },
-  "groupColorPink": {
-    "message": "Pink"
-  },
-  "groupColorPurple": {
-    "message": "Purple"
-  },
-  "groupColorCyan": {
-    "message": "Cyan"
-  },
-  "groupColorOrange": {
-    "message": "Orange"
+  "settingShowGuide": {
+    "message": "Show Guide"
   },
   "guideOpenHead": {
-    "message": "Two Ways to Open the Extension Sidebar:"
+    "message": "How to Open Vertical Tabs"
   },
   "guideOpenC1": {
-    "message": "Click the Extension icon. You need to Pin the extension to the browser toolbar."
+    "message": "Click the extension icon in the toolbar"
   },
   "guideOpenC2_1": {
-    "message": "Use shortcut keys. Please set it at"
+    "message": "Or set a keyboard shortcut at"
   },
   "guideOpenC2_2": {
-    "message": "by yourself, the default is Alt+V ."
+    "message": "for quick access"
   },
   "guideHowHead": {
-    "message": "How to use the extension:"
+    "message": "How to Use"
   },
   "guideHowC1": {
-    "message": "Single Click: switch to the tab."
+    "message": "Click on a tab to switch to it"
   },
   "guideHowC2": {
-    "message": "Double Click: close the tab."
+    "message": "Drag and drop tabs to reorder them"
   },
   "guideHowC3": {
-    "message": "Right Click: functions such as closing, pinning, and duplicating the tab."
+    "message": "Right-click on tabs for more options"
   },
   "guideHowC4": {
-    "message": "Drag Up or Down: move the position of the tab."
+    "message": "Create groups by dragging tabs together"
   },
   "guideHowC5": {
-    "message": "Bottom Toolbar: search tabs."
+    "message": "Click group headers to collapse/expand groups"
   },
   "guideHowC6": {
-    "message": "Middle Click: close the tab."
+    "message": "Use the search bar to quickly find tabs"
   },
   "guideSettingsHead": {
-    "message": "Extension Settings"
+    "message": "Settings"
   },
   "guideSettingsC1": {
-    "message": "Click the Settings button to the right of the search box. Settings includes: whether to display the creating newtab button, disable the double-click closing behavior, dark/light theme setting, etc."
+    "message": "Click the settings icon at the bottom to customize your experience"
   },
   "guideBrowserHead": {
-    "message": "Set the position of the sidebar: left or right:"
+    "message": "Browser Settings"
   },
   "guideBrowserC1": {
-    "message": "Browser Settings → Appearance → Side panel"
+    "message": "Configure sidebar position (left/right) in browser settings"
   }
 }
