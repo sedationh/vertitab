@@ -68,5 +68,3 @@ jobs:
           files: ./dist/vertitab-enhanced-v${{ steps.get_version.outputs.VERSION }}.zip
           draft: false
           prerelease: false
-          asset_name: vertitab-enhanced-v${{ steps.get_version.outputs.VERSION }}.zip
-          asset_content_type: application/zip
