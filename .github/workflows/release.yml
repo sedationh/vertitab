@@ -3,7 +3,7 @@ name: Create Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 permissions:
   contents: write
@@ -11,20 +11,20 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Get version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: Create extension package
         run: |
           # Create a temporary directory for the package
           mkdir -p dist
-          
+
           # Copy necessary files (exclude dev files)
           rsync -av --exclude='.git' \
                     --exclude='.github' \
@@ -36,19 +36,19 @@ jobs:
                     --exclude='*.backup' \
                     --exclude='.DS_Store' \
                     ./ dist/vertitab-enhanced/
-          
+
           # Create zip file
           cd dist
           zip -r "vertitab-enhanced-v${{ steps.get_version.outputs.VERSION }}.zip" vertitab-enhanced/
           cd ..
-      
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: Vertical Tabs Enhanced v${{ steps.get_version.outputs.VERSION }}
           body: |
             ## Vertical Tabs - Enhanced Edition v${{ steps.get_version.outputs.VERSION }}
-            
+
             ### Installation
             1. Download the `vertitab-enhanced-v${{ steps.get_version.outputs.VERSION }}.zip` file below
             2. Extract the zip file
@@ -56,13 +56,13 @@ jobs:
             4. Enable "Developer mode"
             5. Click "Load unpacked"
             6. Select the extracted `vertitab-enhanced` folder
-            
+
             ### Features
             - ✨ Group close button functionality
             - 🔝 Top search bar as default
             - 🎯 Auto-focus search input
             - 📚 Fully documented and readable code
-            
+
             ### Credits
             Original extension by [Guo Kai](https://guokai.dev/)
           files: ./dist/vertitab-enhanced-v${{ steps.get_version.outputs.VERSION }}.zip

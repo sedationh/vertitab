@@ -13,11 +13,13 @@
 #### Creating a New Release
 
 1. Ensure all changes are committed
+
    ```bash
    git status  # Check for uncommitted changes
    ```
 
 2. Run the release script
+
    ```bash
    ./release.sh
    ```
@@ -42,6 +44,7 @@
 ### 📥 User Downloads
 
 Users can:
+
 1. Visit the project's Releases page
 2. Download the latest `vertitab-enhanced-vX.X.X.zip`
 3. Extract and load directly into Chrome
@@ -111,15 +114,17 @@ Users Can Download
 ### 🐛 Troubleshooting
 
 **Issue: Actions not triggered**
+
 - Check tag format is correct (v1.0.8)
 - Check .github/workflows/release.yml file exists
 - Check if Actions are enabled in repo Settings → Actions
 
 **Issue: Release creation failed**
+
 - Check GitHub Token permissions
 - Check if tag/release with same name already exists
 
 **Issue: Zip file incomplete**
+
 - Check exclude list in release.yml
 - Ensure all required files are committed
-
