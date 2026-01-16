@@ -54,6 +54,11 @@ class Tabs {
     // Build initial tab list
     Tabs.build().then(function () {
       SidePanelOpen = true;
+      // Auto-focus search input when side panel opens
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) {
+        searchInput.focus();
+      }
     });
   }
   
@@ -1419,7 +1424,7 @@ class Settings {
     // Load saved settings with defaults
     Settings.settings = await chrome.storage.sync.get({
       showNewtabButton: false,
-      searchPosition: "bottom",
+      searchPosition: "top",
       fontSize: "normal",
       pinMode: "normal",
       closeByDoubleClick: true,
@@ -1654,16 +1659,20 @@ class Groups {
     Groups.updateTitle(groupLabel, group.title);
     groupLabel.className = "group-label";
     
-    const expandIcon = document.createElement("img");
-    expandIcon.src = "img/expand_less.svg";
-    expandIcon.className = "group-expand-icon";
+    // Create close button (replaces the old expand icon)
+    const closeButton = document.createElement("img");
+    closeButton.src = "img/close.svg";
+    closeButton.className = "group-close-icon";
+    closeButton.addEventListener("click", Groups.onCloseClick);
+    closeButton.addEventListener("dblclick", stopEvent);
     
-    groupHeader.append(groupLabel, expandIcon);
+    groupHeader.append(groupLabel, closeButton);
     
     if (group.collapsed) {
       groupContainer.classList.add("collapse");
     }
     
+    // Click on header (but not on close button) toggles collapse
     groupHeader.addEventListener("click", Groups.onHeaderClick);
     
     // Create outer wrapper for header (for drag-drop)
@@ -1727,11 +1736,39 @@ class Groups {
    * @param {MouseEvent} event - The click event
    */
   static onHeaderClick(event) {
+    // Don't toggle collapse if clicking on the close button
+    if (event.target.classList.contains("group-close-icon")) {
+      return;
+    }
+    
     const groupElement = event.currentTarget.closest(".group-item");
     const groupId = parseInt(groupElement.id.substring(6));
     
     chrome.tabGroups.update(groupId, {
       collapsed: !groupElement.classList.contains("collapse"),
+    });
+  }
+  
+  /**
+   * Handle group close button click - close all tabs in the group
+   * @param {MouseEvent} event - The click event
+   */
+  static onCloseClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const groupElement = event.currentTarget.closest(".group-item");
+    const groupId = parseInt(groupElement.id.substring(6));
+    
+    // Get all tabs in this group and close them
+    chrome.tabs.query({ currentWindow: true }, function (tabs) {
+      const tabsToClose = tabs
+        .filter((tab) => tab.groupId === groupId)
+        .map((tab) => tab.id);
+      
+      if (tabsToClose.length > 0) {
+        chrome.tabs.remove(tabsToClose);
+      }
     });
   }
 }
@@ -2162,6 +2199,36 @@ document.addEventListener("mousedown", function (event) {
 });
 
 /**
+ * Try to focus search input with delay to ensure panel is ready
+ */
+function tryFocusSearch() {
+  setTimeout(() => {
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+      searchInput.focus();
+    }
+  }, 150);
+}
+
+// Focus when window gains focus (keyboard shortcut activation)
+window.addEventListener("focus", tryFocusSearch);
+
+// Focus when page becomes visible
+document.addEventListener("visibilitychange", function() {
+  if (!document.hidden) {
+    tryFocusSearch();
+  }
+});
+
+// Focus on any click in the panel (ensures focus after user interaction)
+document.addEventListener("click", function(event) {
+  // Don't interfere with clicks on inputs or buttons
+  if (!event.target.closest('input, button, dialog')) {
+    tryFocusSearch();
+  }
+}, true);
+
+/**
  * Initialize all components of the extension
  */
 function init() {
@@ -2172,6 +2239,9 @@ function init() {
   Search.init();
   Settings.init();
   initMsg();
+  
+  // Initial focus attempt
+  tryFocusSearch();
 }
 
 // Start the application

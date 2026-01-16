@@ -28,7 +28,7 @@ html {
 .tab-active {
   background-color: #404040  !important;
 }
-.group-expand-icon, .context-group-color.selected::before {
+.group-expand-icon, .group-close-icon, .context-group-color.selected::before {
   filter: none;
 }
 .close-btn, .favicon[src="img/tab.svg"], #newtab-btn > img, .state-indicator > img {
