@@ -1,0 +1,1160 @@
+const NoGroup = chrome.tabGroups.TAB_GROUP_ID_NONE;
+let WindowId,
+  Main = document.getElementById("main"),
+  SidePanelOpen = !1;
+function stopEvent(a) {
+  a.preventDefault();
+  a.stopPropagation();
+}
+class Tabs {
+  static init() {
+    chrome.tabs.onUpdated.addListener(Tabs.onUpdated);
+    chrome.tabs.onRemoved.addListener(Tabs.onTabRemoved);
+    chrome.tabs.onCreated.addListener(Tabs.onCreated);
+    chrome.tabs.onActivated.addListener(Tabs.onActivated);
+    chrome.tabs.onReplaced.addListener(Tabs.delayRebuild);
+    chrome.tabs.onMoved.addListener(Tabs.delayRebuild);
+    chrome.tabs.onDetached.addListener(Tabs.delayRebuild);
+    chrome.tabs.onAttached.addListener(Tabs.delayRebuild);
+    Tabs.delayTimeoutId = 0;
+    Tabs.build().then(function () {
+      SidePanelOpen = !0;
+    });
+  }
+  static getMainList() {
+    return Main.firstElementChild.firstElementChild;
+  }
+  static initNewtabBtn() {
+    document
+      .getElementById("newtab-btn")
+      .addEventListener("click", () => chrome.tabs.create({}));
+    document.getElementById("newtab").classList.add("show");
+  }
+  static async build() {
+    if (!DnD.dragging) {
+      var a = await chrome.windows.getCurrent({ populate: !0 });
+      WindowId = a.id;
+      var b = document.createElement("div");
+      b.className = "tab-list";
+      var c, d;
+      for (let f of a.tabs) {
+        a = f.groupId;
+        if (a !== NoGroup) {
+          if (e !== a)
+            if ((d = await Groups.get(a))) {
+              var e = a;
+              a = Groups.createGroup(d);
+              d = a.lastElementChild;
+              b.appendChild(a);
+            } else {
+              Tabs.delayRebuild();
+              return;
+            }
+          a = Tabs.createTab(f);
+          d.appendChild(a);
+        } else ((a = Tabs.createTab(f)), b.appendChild(a));
+        f.active && (c = a);
+      }
+      Tabs.getMainList().replaceWith(b);
+      c?.scrollIntoViewIfNeeded(!0);
+    }
+  }
+  static delayRebuild() {
+    clearTimeout(Tabs.delayTimeoutId);
+    Tabs.delayTimeoutId = setTimeout(Tabs.build, 400);
+  }
+  static createTab(a) {
+    let b = document.createElement("div");
+    b.id = `tab-${a.id}`;
+    b.className = a.active ? "tab-item tab-active" : "tab-item";
+    b.dataset.group = a.groupId;
+    a.pinned && b.classList.add("tab-pin");
+    b.appendChild(Tabs.createFavicon(a));
+    b.appendChild(Tabs.createLink(a));
+    b.appendChild(Tabs.createCloseBtn());
+    b.addEventListener("click", Tabs.onTabClick);
+    b.addEventListener("dblclick", Tabs.onTabDoubleClick);
+    b.addEventListener("auxclick", Tabs.onTabMiddleClick);
+    b.addEventListener("contextmenu", ContextMenu.showTabMenu);
+    Tabs.setTabState(a, b);
+    DnD.initTabDrag(b);
+    return b;
+  }
+  static insertTab(a) {
+    var b = Tabs.getMainList();
+    if (a.groupId === NoGroup) {
+      var c = Tabs.createTab(a);
+      let d = b.querySelectorAll(".tab-item");
+      if (a.index === d.length) {
+        b.appendChild(c);
+        return;
+      }
+      if (a.index < d.length && (a = d[a.index])) {
+        if (a.parentElement === b) {
+          b.insertBefore(c, a);
+          return;
+        }
+        if ((a = a.closest(".group-item"))) {
+          b.insertBefore(c, a);
+          return;
+        }
+      }
+    } else if (
+      document.getElementById(`group-${a.groupId}`) &&
+      ((b = b.querySelectorAll(".tab-item")[a.index - 1]),
+      b.dataset.group === a.groupId.toString())
+    ) {
+      c = Tabs.createTab(a);
+      b.after(c);
+      return;
+    }
+    Tabs.delayRebuild();
+  }
+  static updateGroup(a, b, c) {
+    a.dataset.group = c;
+    Tabs.delayRebuild();
+  }
+  static faviconFallback(a) {
+    let b = a.target;
+    a = parseInt(b.parentElement.id.substring(4));
+    chrome.tabs.get(a, function (c) {
+      b.src =
+        chrome.runtime.lastError || !c
+          ? "img/tab.svg"
+          : c.url
+            ? `/_favicon/?pageUrl=${encodeURIComponent(c.url)}&size=32`
+            : "img/tab.svg";
+    });
+  }
+  static createFavicon(a) {
+    let b = document.createElement("img");
+    SidePanelOpen && a.favIconUrl && a.favIconUrl.startsWith("http")
+      ? (b.src = a.favIconUrl)
+      : (b.src = a.url
+          ? `/_favicon/?pageUrl=${encodeURIComponent(a.url)}&size=32`
+          : "img/tab.svg");
+    b.className = "favicon";
+    b.addEventListener("error", Tabs.faviconFallback);
+    return b;
+  }
+  static createLink(a) {
+    let b = document.createElement("div");
+    b.className = "tab-link";
+    a.title &&
+      ((b.title = a.title), b.appendChild(document.createTextNode(a.title)));
+    return b;
+  }
+  static setTabState(a, b) {
+    let c = !1;
+    if (a.mutedInfo?.muted) var d = "img/volume_off.svg";
+    else a.audible && ((c = !0), (d = "img/volume_down.svg"));
+    a = b.querySelector(".state-indicator");
+    if (d) {
+      let e = document.createElement("div");
+      e.className = "state-indicator";
+      let f = document.createElement("img");
+      f.src = d;
+      e.appendChild(f);
+      c &&
+        ((d = document.createElement("img")),
+        (d.src = "img/volume_up.svg"),
+        (d.className = "audible-animate"),
+        e.appendChild(d));
+      a ? a.replaceWith(e) : b.lastElementChild.before(e);
+    } else a?.remove();
+  }
+  static createCloseBtn() {
+    let a = document.createElement("img");
+    a.src = "img/close.svg";
+    a.className = "close-btn";
+    a.addEventListener("click", Tabs.onCloseClick);
+    a.addEventListener("dblclick", stopEvent);
+    return a;
+  }
+  static onTabClick(a) {
+    a.preventDefault();
+    a = parseInt(a.currentTarget.id.substring(4));
+    chrome.tabs.update(a, { active: !0 });
+  }
+  static onTabDoubleClick(a) {
+    Settings.closeByDoubleClick &&
+      (a.preventDefault(),
+      (a = parseInt(a.currentTarget.id.substring(4))),
+      chrome.tabs.remove(a));
+  }
+  static onTabMiddleClick(a) {
+    1 == a.button &&
+      (a.preventDefault(),
+      (a = parseInt(a.currentTarget.id.substring(4))),
+      chrome.tabs.remove(a));
+  }
+  static onCloseClick(a) {
+    a.preventDefault();
+    a.stopPropagation();
+    a = parseInt(a.currentTarget.parentElement.id.substring(4));
+    chrome.tabs.remove(a);
+  }
+  static onTabRemoved(a) {
+    (a = document.getElementById(`tab-${a}`)) && a.remove();
+  }
+  static onActivated(a) {
+    if (a.windowId == WindowId) {
+      for (let b of document.querySelectorAll(".tab-active"))
+        b.classList.remove("tab-active");
+      if ((a = document.getElementById(`tab-${a.tabId}`)))
+        (a.classList.add("tab-active"), a.scrollIntoViewIfNeeded(!0));
+    }
+  }
+  static onCreated(a) {
+    a.windowId == WindowId &&
+      (document.getElementById(`tab-${a.id}`) || Tabs.insertTab(a));
+  }
+  static onUpdated(a, b, c) {
+    if (c.windowId == WindowId)
+      if ((a = document.getElementById(`tab-${a}`))) {
+        if (b.title || (b.url && c.title)) {
+          let d = a.querySelector(".tab-link");
+          d.title = c.title;
+          d.textContent = c.title;
+        }
+        b.favIconUrl && c.favIconUrl.startsWith("http")
+          ? (a.querySelector(".favicon").src = b.favIconUrl)
+          : b.url &&
+            (a.querySelector(".favicon").src =
+              `/_favicon/?pageUrl=${encodeURIComponent(b.url)}&size=32`);
+        void 0 !== b.pinned &&
+          (c.pinned
+            ? a.classList.add("tab-pin")
+            : a.classList.remove("tab-pin"));
+        (void 0 === b.audible && void 0 === b.mutedInfo) ||
+          Tabs.setTabState(c, a);
+        void 0 !== b.groupId && Tabs.updateGroup(a, c, b.groupId);
+      } else Tabs.delayRebuild();
+  }
+}
+class DnD {
+  static initTabDrag(a) {
+    a.draggable = !0;
+    a.addEventListener("dragstart", DnD.dragStart);
+    a.addEventListener("dragend", DnD.dragEnd);
+    a.addEventListener("drop", DnD.drop);
+    a.addEventListener("dragenter", DnD.dragEnter);
+    a.addEventListener("dragover", DnD.dragOver);
+    a.addEventListener("dragleave", DnD.dragLeave);
+  }
+  static initGroupDrag(a) {
+    a.draggable = !0;
+    a.addEventListener("dragstart", DnD.groupDragStart);
+    a.addEventListener("dragend", DnD.groupDragEnd);
+    a.addEventListener("drop", DnD.drop);
+    a.addEventListener("dragenter", DnD.dragEnter);
+    a.addEventListener("dragover", DnD.dragOver);
+    a.addEventListener("dragleave", DnD.dragLeave);
+  }
+  static insertFakeBottom() {
+    if (!DnD.fakeBottom) {
+      let a = document.createElement("div");
+      a.className = "drop-fake-bottom drop-zone";
+      a.addEventListener("drop", DnD.drop);
+      a.addEventListener("dragenter", DnD.dragEnter);
+      a.addEventListener("dragover", DnD.dragOver);
+      a.addEventListener("dragleave", DnD.dragLeave);
+      DnD.fakeBottom = a;
+    }
+    Tabs.getMainList().appendChild(DnD.fakeBottom);
+  }
+  static dragStart(a) {
+    a.stopPropagation();
+    DnD.dragging = !0;
+    const b = a.currentTarget;
+    b.classList.add("dragging");
+    for (let c of document.querySelectorAll(".tab-item, .group-header-outer"))
+      c.classList.add("drop-zone");
+    requestAnimationFrame(() => {
+      DnD.insertFakeBottom();
+    });
+    a = a.dataTransfer;
+    a.setData("tab-id", b.id);
+    a.dropEffect = "move";
+    a.effectAllowed = "move";
+    a.setDragImage(b, 10, 10);
+  }
+  static groupDragStart(a) {
+    a.stopPropagation();
+    DnD.dragging = !0;
+    const b = a.currentTarget,
+      c = b.parentElement;
+    b.classList.add("dragging", "collapse");
+    for (let d of document.querySelectorAll(".tab-item, .group-header-outer"))
+      d.classList.add("drop-zone");
+    for (let d of document.querySelectorAll(".group-item"))
+      d.classList.contains("collapse") && (d.dataset.collapse = "true");
+    requestAnimationFrame(() => {
+      for (let d of document.querySelectorAll(".group-item"))
+        d.classList.add("collapse");
+      DnD.insertFakeBottom();
+    });
+    a = a.dataTransfer;
+    a.setData("tab-id", c.id);
+    a.dropEffect = "move";
+    a.effectAllowed = "move";
+    a.setDragImage(b, 10, 10);
+  }
+  static dragOver(a) {
+    if ("tab-id" === a.dataTransfer.types[0])
+      return (a.preventDefault(), (a.dataTransfer.dropEffect = "move"), !1);
+  }
+  static dragEnter(a) {
+    "tab-id" === a.dataTransfer.types[0] && this.classList.add("drag-over");
+  }
+  static dragLeave(a) {
+    "tab-id" === a.dataTransfer.types[0] && this.classList.remove("drag-over");
+  }
+  static dragEnd(a) {
+    DnD.dragging = !1;
+    a.currentTarget.classList.remove("dragging");
+    for (let b of document.querySelectorAll(".tab-item, .group-header-outer"))
+      b.classList.remove("drop-zone", "drag-over");
+    DnD.fakeBottom.classList.remove("drag-over");
+    DnD.fakeBottom.remove();
+  }
+  static groupDragEnd(a) {
+    DnD.dragging = !1;
+    a.currentTarget.classList.remove("dragging", "collapse");
+    for (let b of document.querySelectorAll(".tab-item, .group-header-outer"))
+      b.classList.remove("drop-zone", "drag-over");
+    for (let b of document.querySelectorAll(".group-item"))
+      b.dataset.collapse
+        ? delete b.dataset.collapse
+        : b.classList.remove("collapse");
+    DnD.fakeBottom.classList.remove("drag-over");
+    DnD.fakeBottom.remove();
+  }
+  static drop(a) {
+    a.preventDefault();
+    a.stopPropagation();
+    const b = a.dataTransfer.getData("tab-id");
+    if (!b) return !1;
+    const c = document.getElementById(b);
+    if (!c) return !1;
+    a = a.currentTarget;
+    a.classList.contains("group-header-outer") && (a = a.parentElement);
+    if (c === a || c.nextElementSibling === a) return !1;
+    b.startsWith("group-") ? DnD.moveGroup(b, c, a) : DnD.moveTab(b, c, a);
+    return !1;
+  }
+  static async moveTab(a, b, c) {
+    const d = c.classList.contains("group-item");
+    let e,
+      f = !1;
+    c.before(b);
+    d ||
+      (Groups.isInGroup(c)
+        ? (e = parseInt(c.dataset.group))
+        : (f = Groups.isAfterGroup(b)));
+    c = document.querySelectorAll(".tab-item");
+    b = Array.prototype.indexOf.call(c, b);
+    a = parseInt(a.substring(4));
+    try {
+      (await chrome.tabs.move(a, { index: b }),
+        d || f
+          ? await chrome.tabs.ungroup(a)
+          : e && (await chrome.tabs.group({ groupId: e, tabIds: a })));
+    } catch (h) {
+      console.error(h);
+    }
+    Tabs.build();
+  }
+  static async moveGroup(a, b, c) {
+    a = parseInt(a.substring(6));
+    var d = document.querySelectorAll(".tab-item"),
+      e = b.querySelector(".tab-item");
+    const f = b.querySelectorAll(".tab-item");
+    let h = c;
+    c.classList.contains("group-item") && (h = c.querySelector(".tab-item"));
+    e = Array.prototype.indexOf.call(d, e);
+    d = Array.prototype.indexOf.call(d, h);
+    try {
+      c.before(b);
+    } catch (k) {
+      Tabs.build();
+      return;
+    }
+    if (-1 === d || d > e) {
+      b = [];
+      for (var g of f) b.push(parseInt(g.id.substring(4)));
+      try {
+        g = -1 === d ? d : d - 1;
+        const k = await Groups.get(a);
+        await chrome.tabs.ungroup(b);
+        for (let l of b) await chrome.tabs.move(l, { index: g });
+        const m = await chrome.tabs.group({ tabIds: b });
+        await chrome.tabGroups.update(m, {
+          collapsed: k.collapsed,
+          color: k.color,
+          title: k.title,
+        });
+      } catch (k) {
+        console.log(k);
+      }
+    } else if (d < e)
+      try {
+        await chrome.tabGroups.move(a, { index: d });
+      } catch (k) {
+        console.log(k);
+      }
+    Tabs.build();
+  }
+}
+class ContextMenu {
+  static init() {
+    ContextMenu.tabMenu = document.getElementById("tab-context-menu");
+    ContextMenu.groupMenu = document.getElementById("group-context-menu");
+    ContextMenu.tabMenu.addEventListener("contextmenu", stopEvent);
+    ContextMenu.groupMenu.addEventListener("contextmenu", stopEvent);
+    document.addEventListener("contextmenu", stopEvent);
+    window.addEventListener("blur", ContextMenu.hide);
+    document.addEventListener("keydown", function (b) {
+      "INPUT" !== b.target.tagName && "Escape" == b.key && ContextMenu.hide();
+    });
+    document
+      .getElementById("tab-close-self")
+      .addEventListener("click", ContextMenu.closeSelf);
+    document
+      .getElementById("tab-close-others")
+      .addEventListener("click", ContextMenu.closeOthers);
+    document
+      .getElementById("tab-close-left")
+      .addEventListener("click", ContextMenu.closeLeft);
+    document
+      .getElementById("tab-close-right")
+      .addEventListener("click", ContextMenu.closeRight);
+    document
+      .getElementById("tab-close-group")
+      .addEventListener("click", ContextMenu.closeGroupByTabMenu);
+    document
+      .getElementById("tab-reload")
+      .addEventListener("click", ContextMenu.reload);
+    document
+      .getElementById("tab-duplicate")
+      .addEventListener("click", ContextMenu.duplicate);
+    document
+      .getElementById("tab-pin")
+      .addEventListener("click", ContextMenu.pin);
+    document
+      .getElementById("tab-mute")
+      .addEventListener("click", ContextMenu.mute);
+    document
+      .getElementById("tab-newtab-right")
+      .addEventListener("click", ContextMenu.newtabRight);
+    document
+      .getElementById("tab-group-add-remove")
+      .addEventListener("click", ContextMenu.addRemoveTabForGroup);
+    document
+      .getElementById("tab-move-window")
+      .addEventListener("click", ContextMenu.moveTabWindow);
+    document
+      .getElementById("tab-group-move-window")
+      .addEventListener("click", ContextMenu.moveGroupWindowByTabMenu);
+    ContextMenu.TimeoutId = 0;
+    let a = document.getElementById("group-name-input");
+    ContextMenu.input = a;
+    a.placeholder = chrome.i18n.getMessage("groupNamePlaceholder");
+    a.addEventListener("input", ContextMenu.onNameInputChanged);
+    a.addEventListener("keydown", function (b) {
+      "Escape" == b.key && (b.preventDefault(), ContextMenu.hide());
+    });
+    for (let b of document.querySelectorAll(".context-group-color"))
+      b.addEventListener("click", ContextMenu.onColorClick);
+    document
+      .getElementById("group-newtab")
+      .addEventListener("click", ContextMenu.newtabInGroup);
+    document
+      .getElementById("group-close")
+      .addEventListener("click", ContextMenu.closeGroupByGroupMenu);
+    document
+      .getElementById("group-ungroup")
+      .addEventListener("click", ContextMenu.ungroup);
+    document
+      .getElementById("group-move-window")
+      .addEventListener("click", ContextMenu.moveGroupWindowByGroupMenu);
+  }
+  static showTabMenu(a) {
+    a.preventDefault();
+    a.stopPropagation();
+    const b = a.currentTarget,
+      c = parseInt(b.id.substring(4));
+    chrome.tabs.get(c, function (d) {
+      if (!chrome.runtime.lastError && d) {
+        var e = document.getElementById("tab-close-group"),
+          f = document.getElementById("tab-group-move-window"),
+          h = document.getElementById("tab-group-add-remove"),
+          g = d.groupId === NoGroup;
+        e.style.display = g ? "none" : "block";
+        f.style.display = g ? "none" : "block";
+        h.textContent = chrome.i18n.getMessage(
+          g ? "menuAddToGroup" : "menuRemoveFromGroup",
+        );
+        document.getElementById("tab-pin").textContent = chrome.i18n.getMessage(
+          d.pinned ? "menuUnpin" : "menuPin",
+        );
+        document.getElementById("tab-mute").textContent =
+          chrome.i18n.getMessage(d.mutedInfo.muted ? "menuUnmute" : "menuMute");
+        ContextMenu.hide();
+        b.classList.add("context-focus");
+        ContextMenu.tabMenu.classList.add("show");
+        ContextMenu.setMenuPosition(a, ContextMenu.tabMenu);
+        ContextMenu.hideOnClickOutside("#tab-context-menu");
+      }
+    });
+  }
+  static async showGroupMenu(a) {
+    a.preventDefault();
+    a.stopPropagation();
+    const b = parseInt(a.currentTarget.parentElement.id.substring(6)),
+      c = await Groups.get(b);
+    c &&
+      (ContextMenu.hide(),
+      (ContextMenu.groupId = b),
+      ContextMenu.setColorSelect(c.color),
+      (ContextMenu.input.value = c.title),
+      ContextMenu.groupMenu.classList.add("show"),
+      ContextMenu.setMenuPosition(a, ContextMenu.groupMenu),
+      ContextMenu.hideOnClickOutside("#group-context-menu"),
+      ContextMenu.input.focus());
+  }
+  static clearContextFocus() {
+    for (let a of document.querySelectorAll(".context-focus"))
+      a.classList.remove("context-focus");
+  }
+  static hide() {
+    ContextMenu.tabMenu.classList.remove("show");
+    ContextMenu.groupMenu.classList.remove("show");
+    ContextMenu.clearContextFocus();
+  }
+  static setMenuPosition(a, b) {
+    b.style.left =
+      Math.min(a.clientX, window.innerWidth - b.offsetWidth - 1) + "px";
+    b.style.top =
+      Math.min(a.clientY, window.innerHeight - b.offsetHeight - 1) + "px";
+  }
+  static hideOnClickOutside(a) {
+    const b = function (c) {
+      null === c.target.closest(a) &&
+        (ContextMenu.hide(), document.removeEventListener("click", b));
+    };
+    document.addEventListener("click", b);
+  }
+  static async isGroupValid() {
+    return !!(await Groups.get(ContextMenu.groupId));
+  }
+  static setColorSelect(a) {
+    for (let b of document.querySelectorAll(".context-group-color"))
+      b.dataset.color == a
+        ? b.classList.add("selected")
+        : b.classList.remove("selected");
+  }
+  static async onColorClick(a) {
+    a = a.currentTarget.dataset.color;
+    ContextMenu.setColorSelect(a);
+    (await ContextMenu.isGroupValid()) &&
+      chrome.tabGroups.update(ContextMenu.groupId, { color: a });
+  }
+  static async updateGroupName() {
+    if (await ContextMenu.isGroupValid()) {
+      var a = ContextMenu.input.value.trim();
+      chrome.tabGroups.update(ContextMenu.groupId, { title: a });
+    }
+  }
+  static onNameInputChanged() {
+    clearTimeout(ContextMenu.TimeoutId);
+    ContextMenu.TimeoutId = setTimeout(ContextMenu.updateGroupName, 500);
+  }
+  static async newtabInGroup() {
+    ContextMenu.hide();
+    if (await ContextMenu.isGroupValid()) {
+      var a = await chrome.tabs.query({ groupId: ContextMenu.groupId });
+      if ((a = a[a.length - 1]))
+        ((a = await chrome.tabs.create({ index: a.index + 1 })),
+          await chrome.tabs.group({
+            groupId: ContextMenu.groupId,
+            tabIds: a.id,
+          }));
+    }
+  }
+  static async closeGroupByGroupMenu() {
+    ContextMenu.hide();
+    if (await ContextMenu.isGroupValid()) {
+      var a = await chrome.tabs.query({ groupId: ContextMenu.groupId });
+      chrome.tabs.remove(a.map((b) => b.id));
+    }
+  }
+  static async ungroup() {
+    ContextMenu.hide();
+    if (await ContextMenu.isGroupValid()) {
+      var a = await chrome.tabs.query({ groupId: ContextMenu.groupId });
+      chrome.tabs.ungroup(a.map((b) => b.id));
+    }
+  }
+  static async moveGroupWindowByGroupMenu() {
+    ContextMenu.hide();
+    if (await ContextMenu.isGroupValid()) {
+      var a = await chrome.tabs.query({ groupId: ContextMenu.groupId });
+      a[0] &&
+        chrome.runtime.sendMessage({
+          type: "Move-Group-Window",
+          tabId: a[0].id,
+          groupId: ContextMenu.groupId,
+        });
+    }
+  }
+  static stepOne() {
+    let a = document.querySelector(".context-focus"),
+      b = null;
+    a && (b = parseInt(a.id.substring(4)));
+    ContextMenu.hide();
+    return b;
+  }
+  static closeSelf() {
+    const a = ContextMenu.stepOne();
+    a && chrome.tabs.remove(a);
+  }
+  static closeOthers() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.query({ currentWindow: !0 }, function (b) {
+        b = b.filter((c) => c.id != a && !c.pinned).map((c) => c.id);
+        ContextMenu.showCloseConfirm(b);
+      });
+  }
+  static closeLeft() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.query({ currentWindow: !0 }, function (b) {
+        let c = b.find((d) => d.id === a);
+        c &&
+          ((b = b
+            .filter((d) => d.index < c.index && !d.pinned)
+            .map((d) => d.id)),
+          ContextMenu.showCloseConfirm(b));
+      });
+  }
+  static closeRight() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.query({ currentWindow: !0 }, function (b) {
+        let c = b.find((d) => d.id === a);
+        c &&
+          ((b = b
+            .filter((d) => d.index > c.index && !d.pinned)
+            .map((d) => d.id)),
+          ContextMenu.showCloseConfirm(b));
+      });
+  }
+  static showCloseConfirm(a) {
+    10 < a.length ? CloseConfirm.show(a) : chrome.tabs.remove(a);
+  }
+  static closeGroupByTabMenu() {
+    let a = document.querySelector(".context-focus");
+    ContextMenu.hide();
+    if (a) {
+      const b = parseInt(a.dataset.group);
+      b !== NoGroup &&
+        chrome.tabs.query({ currentWindow: !0 }, function (c) {
+          c = c.filter((d) => d.groupId === b).map((d) => d.id);
+          chrome.tabs.remove(c);
+        });
+    }
+  }
+  static reload() {
+    const a = ContextMenu.stepOne();
+    a && chrome.tabs.reload(a);
+  }
+  static duplicate() {
+    const a = ContextMenu.stepOne();
+    a && chrome.tabs.duplicate(a);
+  }
+  static pin() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.get(a, function (b) {
+        !chrome.runtime.lastError &&
+          b &&
+          chrome.tabs.update(a, { pinned: !b.pinned });
+      });
+  }
+  static mute() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.get(a, function (b) {
+        !chrome.runtime.lastError &&
+          b &&
+          chrome.tabs.update(a, { muted: !b.mutedInfo.muted });
+      });
+  }
+  static newtabRight() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.get(a, function (b) {
+        !chrome.runtime.lastError &&
+          b &&
+          chrome.tabs.create({ index: b.index + 1 });
+      });
+  }
+  static addRemoveTabForGroup() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.get(a, function (b) {
+        !chrome.runtime.lastError &&
+          b &&
+          (b.groupId === NoGroup
+            ? chrome.tabs.group({ tabIds: a })
+            : chrome.tabs.ungroup(a));
+      });
+  }
+  static moveTabWindow() {
+    const a = ContextMenu.stepOne();
+    a &&
+      chrome.tabs.get(a, function (b) {
+        !chrome.runtime.lastError && b && chrome.windows.create({ tabId: a });
+      });
+  }
+  static moveGroupWindowByTabMenu() {
+    var a = document.querySelector(".context-focus");
+    ContextMenu.hide();
+    if (a) {
+      const b = parseInt(a.id.substring(4));
+      a = parseInt(a.dataset.group);
+      a !== NoGroup &&
+        chrome.runtime.sendMessage({
+          type: "Move-Group-Window",
+          tabId: b,
+          groupId: a,
+        });
+    }
+  }
+}
+class CloseConfirm {
+  static init() {
+    CloseConfirm.dialog = document.getElementById("close-confirm");
+    CloseConfirm.head = CloseConfirm.dialog.querySelector(
+      ".close-confirm-header",
+    );
+    document
+      .getElementById("close-confirm-yes")
+      .addEventListener("click", CloseConfirm.closeTabs);
+    document
+      .getElementById("close-confirm-no")
+      .addEventListener("click", CloseConfirm.close);
+  }
+  static closeTabs() {
+    chrome.tabs.remove(CloseConfirm.ids);
+    CloseConfirm.close();
+  }
+  static show(a) {
+    CloseConfirm.ids = a;
+    CloseConfirm.head.textContent = chrome.i18n.getMessage(
+      "closeConfirmTitle",
+      [a.length],
+    );
+    CloseConfirm.dialog.showModal();
+  }
+  static close() {
+    CloseConfirm.dialog.close();
+  }
+}
+class Settings {
+  static async init() {
+    Settings.container = document.getElementById("settings-container");
+    document
+      .getElementById("settings-icon")
+      .addEventListener("click", Settings.show);
+    document
+      .getElementById("settings-save")
+      .addEventListener("click", Settings.save);
+    document
+      .getElementById("settings-close")
+      .addEventListener("click", Settings.hide);
+    document
+      .getElementById("settings-sidebar-position")
+      .addEventListener("click", Settings.openBrwoserSetting);
+    document
+      .getElementById("settings-sidebar-shortcut")
+      .addEventListener("click", Settings.openExtensionShortcut);
+    Settings.settings = await chrome.storage.sync.get({
+      showNewtabButton: !1,
+      searchPosition: "bottom",
+      fontSize: "normal",
+      pinMode: "normal",
+      closeByDoubleClick: !0,
+      theme: "system",
+    });
+    chrome.storage.sync.onChanged.addListener(() => location.reload());
+    "top" === Settings.settings.searchPosition &&
+      Main.parentElement.classList.add("reverse");
+    "small" === Settings.settings.fontSize && Main.classList.add("font-small");
+    Settings.settings.showNewtabButton && Tabs.initNewtabBtn();
+    Settings.setTheme(Settings.settings.theme);
+  }
+  static get closeByDoubleClick() {
+    return Settings.settings.closeByDoubleClick;
+  }
+  static show() {
+    document.getElementById("settings-newtab").checked =
+      Settings.settings.showNewtabButton;
+    document.getElementById("settings-closeByDoubleClick").checked =
+      Settings.settings.closeByDoubleClick;
+    document.getElementById("settings-search").value =
+      Settings.settings.searchPosition;
+    document.getElementById("settings-font").value = Settings.settings.fontSize;
+    document.getElementById("settings-theme").value = Settings.settings.theme;
+    Settings.container.showModal();
+  }
+  static hide() {
+    Settings.container.close();
+  }
+  static async save() {
+    Settings.hide();
+    let a = {
+      showNewtabButton: document.getElementById("settings-newtab").checked,
+      closeByDoubleClick: document.getElementById("settings-closeByDoubleClick")
+        .checked,
+      searchPosition: document.getElementById("settings-search").value,
+      fontSize: document.getElementById("settings-font").value,
+      theme: document.getElementById("settings-theme").value,
+    };
+    await chrome.storage.sync.set(a);
+  }
+  static openBrwoserSetting(a) {
+    a.preventDefault();
+    chrome.tabs.create({ url: "chrome://settings/appearance" });
+  }
+  static openExtensionShortcut(a) {
+    a.preventDefault();
+    a = chrome.i18n.getMessage("extName");
+    a = "chrome://extensions/shortcuts#:~:text=" + encodeURIComponent(a);
+    chrome.tabs.create({ url: a });
+  }
+  static setTheme(a) {
+    let b = document.getElementById("dark-css");
+    "light" === a
+      ? (b.disabled = !0)
+      : "dark" === a
+        ? (b.disabled = !1)
+        : ((a = window.matchMedia("(prefers-color-scheme: dark)")),
+          Settings.setTheme(a.matches ? "dark" : "light"),
+          a.addEventListener("change", ({ matches: c }) => {
+            Settings.setTheme(c ? "dark" : "light");
+          }));
+  }
+}
+class Groups {
+  static async init() {
+    chrome.tabGroups.onCreated.addListener(Groups.onCreated);
+    chrome.tabGroups.onUpdated.addListener(Groups.onUpdated);
+    chrome.tabGroups.onRemoved.addListener(Groups.onRemoved);
+    chrome.tabGroups.onMoved.addListener(Groups.onMoved);
+    Groups.Colors = Object.values(chrome.tabGroups.Color).map(
+      (b) => `group-color-${b}`,
+    );
+    Groups.cache = new Map();
+    let a = await chrome.tabGroups.query({});
+    for (let b of a) Groups.cache.set(b.id, b);
+  }
+  static async get(a) {
+    let b = Groups.cache.get(a);
+    if (b) return b;
+    try {
+      return (
+        (b = await chrome.tabGroups.get(a)) && Groups.cache.set(b.id, b),
+        b
+      );
+    } catch (c) {
+      return null;
+    }
+  }
+  static onCreated(a) {
+    Groups.cache.set(a.id, a);
+  }
+  static onUpdated(a) {
+    Groups.cache.set(a.id, a);
+    if (a.windowId === WindowId) {
+      var b = document.getElementById(`group-${a.id}`);
+      b &&
+        (Groups.updateColor(b, a.color),
+        Groups.updateTitle(b.querySelector(".group-label"), a.title),
+        a.collapsed
+          ? b.classList.add("collapse")
+          : b.classList.remove("collapse"));
+    }
+  }
+  static onMoved(a) {
+    a.windowId === WindowId && Tabs.delayRebuild();
+  }
+  static onRemoved(a) {
+    Groups.cache.delete(a.id);
+    if ((a = document.getElementById(`group-${a.id}`)))
+      (a.before(...a.querySelectorAll(".tab-item")), a.remove());
+  }
+  static createGroup(a) {
+    let b = document.createElement("div");
+    b.id = `group-${a.id}`;
+    b.className = `group-item group-color-${a.color}`;
+    var c = document.createElement("div");
+    c.className = "group-header";
+    let d = document.createElement("div");
+    Groups.updateTitle(d, a.title);
+    d.className = "group-label";
+    let e = document.createElement("img");
+    e.src = "img/expand_less.svg";
+    e.className = "group-expand-icon";
+    c.append(d, e);
+    a.collapsed && b.classList.add("collapse");
+    c.addEventListener("click", Groups.onHeaderClick);
+    a = document.createElement("div");
+    a.className = "group-header-outer";
+    a.appendChild(c);
+    a.addEventListener("contextmenu", ContextMenu.showGroupMenu);
+    DnD.initGroupDrag(a);
+    c = document.createElement("div");
+    c.className = "group-body";
+    b.append(a, c);
+    return b;
+  }
+  static isInGroup(a) {
+    return a.parentElement.classList.contains("group-body");
+  }
+  static isAfterGroup(a) {
+    return a.previousElementSibling?.classList.contains("group-item");
+  }
+  static updateTitle(a, b) {
+    b = b.trim();
+    0 === b.length && (b = "\u200b");
+    a.textContent = b;
+  }
+  static updateColor(a, b) {
+    a.classList.remove(...Groups.Colors);
+    a.classList.add(`group-color-${b}`);
+  }
+  static onHeaderClick(a) {
+    a = a.currentTarget.closest(".group-item");
+    let b = parseInt(a.id.substring(6));
+    chrome.tabGroups.update(b, {
+      collapsed: !a.classList.contains("collapse"),
+    });
+  }
+}
+class Search {
+  static init() {
+    let a = document.getElementById("search-input");
+    a.placeholder = chrome.i18n.getMessage("searchPlaceholder");
+    a.addEventListener("input", Search.onInputChanged);
+    a.addEventListener("focus", Search.getIndex);
+    a.addEventListener("keydown", function (b) {
+      "Enter" == b.key && (b.preventDefault(), Search.search());
+    });
+    Search.input = a;
+    Search.TimeoutId = 0;
+    chrome.tabs.onUpdated.addListener(Search.onTabUpdated);
+    chrome.tabs.onRemoved.addListener(Search.onTabRemoved);
+    chrome.tabs.onCreated.addListener(Search.onTabChanged);
+    chrome.tabs.onReplaced.addListener(Search.onTabChanged);
+  }
+  static onTabUpdated(a, b) {
+    if (b.title || b.url) Search.needUpdate = !0;
+  }
+  static onTabRemoved(a) {
+    Search.needUpdate = !0;
+    (a = document.getElementById(`search-${a}`)) && a.remove();
+    0 === document.querySelectorAll(".search-item").length && Search.showTabs();
+  }
+  static onTabChanged() {
+    Search.needUpdate = !0;
+  }
+  static loadFuse() {
+    Search.loadFusePromise ||
+      (Search.loadFusePromise = import("/js/fuse.esm.min.js").then(
+        (a) => (window.Fuse = a.default),
+      ));
+    return Search.loadFusePromise;
+  }
+  static async buildIndex() {
+    await Search.loadFuse();
+    let a = await chrome.tabs.query({ windowType: "normal" });
+    const b = {
+      threshold: 0.25,
+      ignoreLocation: !0,
+      includeMatches: !0,
+      keys: [
+        { name: "title", weight: 0.7 },
+        { name: "url", weight: 0.3 },
+      ],
+    };
+    Search.tabsIndex
+      ? Search.tabsIndex.setCollection(a)
+      : (Search.tabsIndex = new Fuse(a, b));
+    Search.needUpdate = !1;
+  }
+  static async getIndex() {
+    if (!Search.tabsIndex || Search.needUpdate)
+      Search.buildIndexPromise
+        ? await Search.buildIndexPromise
+        : ((Search.buildIndexPromise = Search.buildIndex()),
+          await Search.buildIndexPromise,
+          (Search.buildIndexPromise = null));
+    return Search.tabsIndex;
+  }
+  static async search() {
+    var a = Search.input.value.trim();
+    a
+      ? ((a = (await Search.getIndex()).search(a)), Search.showResults(a))
+      : Search.showTabs();
+  }
+  static onInputChanged() {
+    clearTimeout(Search.TimeoutId);
+    Search.TimeoutId = setTimeout(Search.search, 300);
+  }
+  static createResultTab(a) {
+    let b = a.item,
+      c = document.createElement("div");
+    c.id = `search-${b.id}`;
+    c.className = "search-item";
+    c.appendChild(Search.createFavicon(b.url));
+    c.appendChild(Search.createLink(b, a.matches));
+    c.appendChild(Search.createCloseBtn());
+    c.addEventListener("click", Search.onTabClick);
+    c.addEventListener("dblclick", Search.onTabDoubleClick);
+    c.addEventListener("auxclick", Search.onTabMiddleClick);
+    return c;
+  }
+  static createFavicon(a) {
+    let b = document.createElement("img");
+    b.src = a
+      ? `/_favicon/?pageUrl=${encodeURIComponent(a)}&size=32`
+      : "img/tab.svg";
+    b.className = "favicon";
+    return b;
+  }
+  static createLink(a, b) {
+    let c = document.createElement("div"),
+      d = document.createElement("div"),
+      e = document.createElement("div");
+    c.className = "search-link";
+    let f, h;
+    for (let g of b) "title" == g.key ? (f = g) : "url" == g.key && (h = g);
+    a.title &&
+      ((d.className = "search-title"),
+      (d.title = a.title),
+      f
+        ? d.append(...Search.highlightMatch(f))
+        : d.appendChild(document.createTextNode(a.title)));
+    a.url &&
+      ((e.className = "search-url"),
+      (e.title = a.url),
+      h
+        ? e.append(...Search.highlightMatch(h))
+        : e.appendChild(document.createTextNode(a.url)));
+    c.append(d, e);
+    return c;
+  }
+  static highlightMatch(a) {
+    let b = [],
+      c = 0;
+    const d = a.value;
+    for (let [e, f] of a.indices)
+      (c < e && b.push(document.createTextNode(d.substring(c, e))),
+        (c = f + 1),
+        (a = document.createElement("mark")),
+        (a.textContent = d.substring(e, c)),
+        b.push(a));
+    c < d.length && b.push(document.createTextNode(d.substring(c)));
+    return b;
+  }
+  static createCloseBtn() {
+    let a = document.createElement("img");
+    a.src = "img/close.svg";
+    a.className = "close-btn";
+    a.addEventListener("click", Search.onCloseClick);
+    a.addEventListener("dblclick", stopEvent);
+    return a;
+  }
+  static onTabClick(a) {
+    a.preventDefault();
+    const b = parseInt(a.currentTarget.id.substring(7));
+    chrome.tabs.get(b, function (c) {
+      !chrome.runtime.lastError &&
+        c &&
+        (chrome.tabs.update(b, { active: !0 }),
+        chrome.windows.update(c.windowId, { focused: !0 }));
+    });
+  }
+  static onTabDoubleClick(a) {
+    Settings.closeByDoubleClick &&
+      (a.preventDefault(),
+      (a = parseInt(a.currentTarget.id.substring(7))),
+      chrome.tabs.remove(a));
+  }
+  static onTabMiddleClick(a) {
+    1 == a.button &&
+      (a.preventDefault(),
+      (a = parseInt(a.currentTarget.id.substring(7))),
+      chrome.tabs.remove(a));
+  }
+  static onCloseClick(a) {
+    a.preventDefault();
+    a.stopPropagation();
+    a = parseInt(a.currentTarget.parentElement.id.substring(7));
+    chrome.tabs.remove(a);
+  }
+  static createResultHeader() {
+    let a = document.createElement("div"),
+      b = document.createTextNode(chrome.i18n.getMessage("searchResultHeader")),
+      c = document.createElement("img"),
+      d = document.createElement("img");
+    a.className = "search-header";
+    c.src = "img/arrow_back.svg";
+    c.addEventListener("click", Search.showTabs);
+    d.src = "img/refresh.svg";
+    d.addEventListener("click", Search.search);
+    a.append(c, b, d);
+    return a;
+  }
+  static createNoResults() {
+    let a = document.createElement("div");
+    a.className = "search-no-results";
+    a.textContent = chrome.i18n.getMessage("searchNoResults");
+    return a;
+  }
+  static showResults(a) {
+    let b = document.createElement("div");
+    Search.ResultHeader || (Search.ResultHeader = Search.createResultHeader());
+    b.appendChild(Search.ResultHeader);
+    for (let c of a) b.appendChild(Search.createResultTab(c));
+    0 === a.length && b.appendChild(Search.createNoResults());
+    Main.replaceChild(b, Main.lastElementChild);
+    Main.classList.add("search-on");
+  }
+  static showTabs() {
+    Search.input.value = "";
+    Main.classList.remove("search-on");
+  }
+}
+function initMsg(a = document) {
+  let b = a.querySelectorAll("[data-i18n]");
+  for (const c of b) c.textContent = chrome.i18n.getMessage(c.dataset.i18n);
+  a = a.querySelectorAll("[data-i18n-title]");
+  for (const c of a) c.title = chrome.i18n.getMessage(c.dataset.i18nTitle);
+}
+document.addEventListener("mousedown", function (a) {
+  1 == a.button && a.preventDefault();
+});
+function init() {
+  Tabs.init();
+  Groups.init();
+  ContextMenu.init();
+  CloseConfirm.init();
+  Search.init();
+  Settings.init();
+  initMsg();
+}
+init();
