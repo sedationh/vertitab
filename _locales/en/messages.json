@@ -110,6 +110,63 @@
   "settingThemeAuto": {
     "message": "Auto"
   },
+  "settingThemeSystem": {
+    "message": "System"
+  },
+  "settingSearch": {
+    "message": "Search Position"
+  },
+  "settingAtTop": {
+    "message": "Top"
+  },
+  "settingAtBottom": {
+    "message": "Bottom"
+  },
+  "settingFontSize": {
+    "message": "Font Size"
+  },
+  "settingFontSizeNormal": {
+    "message": "Normal"
+  },
+  "settingFontSizeSmall": {
+    "message": "Small"
+  },
+  "settingNewtab": {
+    "message": "Show New Tab Button"
+  },
+  "settingCloseByDoubleClick": {
+    "message": "Close Tab by Double Click"
+  },
+  "settingSidebarPosition": {
+    "message": "Sidebar Position:"
+  },
+  "settingSidebarPositionLink": {
+    "message": "Browser Settings"
+  },
+  "settingSidebarShortcut": {
+    "message": "Keyboard Shortcut:"
+  },
+  "settingSidebarShortcutLink": {
+    "message": "Extension Shortcuts"
+  },
+  "settingAbout": {
+    "message": "About"
+  },
+  "settingRate": {
+    "message": "Rate Us"
+  },
+  "settingDonate": {
+    "message": "Donate"
+  },
+  "settingWebsite": {
+    "message": "Website"
+  },
+  "settingSave": {
+    "message": "Save"
+  },
+  "settingCancel": {
+    "message": "Cancel"
+  },
   "settingSearchPosition": {
     "message": "Search Position"
   },
