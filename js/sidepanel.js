@@ -864,6 +864,8 @@ class ContextMenu {
     document.getElementById("tab-close-left").addEventListener("click", ContextMenu.closeLeft);
     document.getElementById("tab-close-right").addEventListener("click", ContextMenu.closeRight);
     document.getElementById("tab-close-group").addEventListener("click", ContextMenu.closeGroupByTabMenu);
+    document.getElementById("tab-close-group-above").addEventListener("click", ContextMenu.closeGroupAbove);
+    document.getElementById("tab-close-group-below").addEventListener("click", ContextMenu.closeGroupBelow);
     document.getElementById("tab-reload").addEventListener("click", ContextMenu.reload);
     document.getElementById("tab-duplicate").addEventListener("click", ContextMenu.duplicate);
     document.getElementById("tab-pin").addEventListener("click", ContextMenu.pin);
@@ -913,11 +915,15 @@ class ContextMenu {
       
       // Show/hide group-related menu items based on tab's group status
       const closeGroupItem = document.getElementById("tab-close-group");
+      const closeGroupAboveItem = document.getElementById("tab-close-group-above");
+      const closeGroupBelowItem = document.getElementById("tab-close-group-below");
       const moveGroupWindowItem = document.getElementById("tab-group-move-window");
       const addRemoveGroupItem = document.getElementById("tab-group-add-remove");
       const isInGroup = tab.groupId !== NoGroup;
       
       closeGroupItem.style.display = isInGroup ? "block" : "none";
+      closeGroupAboveItem.style.display = isInGroup ? "block" : "none";
+      closeGroupBelowItem.style.display = isInGroup ? "block" : "none";
       moveGroupWindowItem.style.display = isInGroup ? "block" : "none";
       addRemoveGroupItem.textContent = chrome.i18n.getMessage(
         isInGroup ? "menuRemoveFromGroup" : "menuAddToGroup"
@@ -1232,6 +1238,80 @@ class ContextMenu {
         .filter((tab) => tab.groupId === groupId)
         .map((tab) => tab.id);
       chrome.tabs.remove(tabsToClose);
+    });
+  }
+  
+  /**
+   * Close all tabs above the current tab in its group
+   */
+  static closeGroupAbove() {
+    const focusedElement = document.querySelector(".context-focus");
+    const tabId = focusedElement ? parseInt(focusedElement.id.substring(4)) : null;
+    
+    ContextMenu.hide();
+    
+    if (!tabId || !focusedElement) return;
+    
+    const groupId = parseInt(focusedElement.dataset.group);
+    
+    // Only work when the tab is in a group
+    if (groupId === NoGroup) return;
+    
+    chrome.tabs.query({ currentWindow: true }, function (tabs) {
+      const selectedTab = tabs.find((tab) => tab.id === tabId);
+      
+      if (!selectedTab) return;
+      
+      // Find all tabs that are:
+      // 1. In the same group as the selected tab
+      // 2. Have a lower index than the selected tab
+      // 3. Are not pinned
+      const tabsToClose = tabs
+        .filter((tab) => 
+          tab.groupId === groupId && 
+          tab.index < selectedTab.index && 
+          !tab.pinned
+        )
+        .map((tab) => tab.id);
+      
+      ContextMenu.showCloseConfirm(tabsToClose);
+    });
+  }
+  
+  /**
+   * Close all tabs below the current tab in its group
+   */
+  static closeGroupBelow() {
+    const focusedElement = document.querySelector(".context-focus");
+    const tabId = focusedElement ? parseInt(focusedElement.id.substring(4)) : null;
+    
+    ContextMenu.hide();
+    
+    if (!tabId || !focusedElement) return;
+    
+    const groupId = parseInt(focusedElement.dataset.group);
+    
+    // Only work when the tab is in a group
+    if (groupId === NoGroup) return;
+    
+    chrome.tabs.query({ currentWindow: true }, function (tabs) {
+      const selectedTab = tabs.find((tab) => tab.id === tabId);
+      
+      if (!selectedTab) return;
+      
+      // Find all tabs that are:
+      // 1. In the same group as the selected tab
+      // 2. Have a higher index than the selected tab
+      // 3. Are not pinned
+      const tabsToClose = tabs
+        .filter((tab) => 
+          tab.groupId === groupId && 
+          tab.index > selectedTab.index && 
+          !tab.pinned
+        )
+        .map((tab) => tab.id);
+      
+      ContextMenu.showCloseConfirm(tabsToClose);
     });
   }
   /**

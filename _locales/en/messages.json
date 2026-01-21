@@ -26,6 +26,12 @@
   "menuCloseGroup": {
     "message": "Close This Group"
   },
+  "menuCloseGroupAbove": {
+    "message": "Close Tabs Above in Group ⤒"
+  },
+  "menuCloseGroupBelow": {
+    "message": "Close Tabs Below in Group ⤓"
+  },
   "menuReload": {
     "message": "Reload"
   },
